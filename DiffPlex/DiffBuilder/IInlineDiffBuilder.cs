@@ -1,6 +1,4 @@
-﻿using DiffPlex.DiffBuilder.Model;
-
-namespace DiffPlex.DiffBuilder
+﻿namespace DiffPlex
 {
     public interface IInlineDiffBuilder
     {

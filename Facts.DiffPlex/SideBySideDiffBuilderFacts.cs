@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using DiffPlex;
-using DiffPlex.Model;
-using DiffPlex.DiffBuilder;
-using DiffPlex.DiffBuilder.Model;
 using Moq;
 using Xunit;
 

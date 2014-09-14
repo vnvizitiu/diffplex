@@ -1,6 +1,4 @@
-﻿using DiffPlex.DiffBuilder.Model;
-
-namespace DiffPlex.DiffBuilder
+﻿namespace DiffPlex
 {
     /// <summary>
     /// Provides methods that generate differences between texts for displaying in a side by side view.

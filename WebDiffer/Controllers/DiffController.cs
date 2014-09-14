@@ -1,6 +1,5 @@
 ﻿using System.Web.Mvc;
 using DiffPlex;
-using DiffPlex.DiffBuilder;
 
 namespace WebDiffer.Controllers
 {

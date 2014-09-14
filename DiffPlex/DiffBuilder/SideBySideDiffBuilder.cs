@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using DiffPlex.DiffBuilder.Model;
-using DiffPlex.Model;
 
-namespace DiffPlex.DiffBuilder
+namespace DiffPlex
 {
     public class SideBySideDiffBuilder : ISideBySideDiffBuilder
     {

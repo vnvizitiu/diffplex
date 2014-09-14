@@ -1,4 +1,4 @@
-﻿namespace DiffPlex.Model
+﻿namespace DiffPlex
 {
     public class ModificationData
     {

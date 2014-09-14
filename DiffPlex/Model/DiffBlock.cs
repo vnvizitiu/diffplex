@@ -1,4 +1,4 @@
-﻿namespace DiffPlex.Model
+﻿namespace DiffPlex
 {
     /// <summary>
     /// A block of consecutive edits from A and/or B

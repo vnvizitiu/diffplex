@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using DiffPlex;
-using DiffPlex.Model;
 using Xunit;
 using Xunit.Extensions;
 

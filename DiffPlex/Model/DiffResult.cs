@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace DiffPlex.Model
+namespace DiffPlex
 {
     /// <summary>
     /// The result of diffing two peices of text

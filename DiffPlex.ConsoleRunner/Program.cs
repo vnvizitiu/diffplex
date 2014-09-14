@@ -1,6 +1,4 @@
 ﻿using System;
-using DiffPlex.DiffBuilder;
-using DiffPlex.DiffBuilder.Model;
 
 namespace DiffPlex.ConsoleRunner
 {

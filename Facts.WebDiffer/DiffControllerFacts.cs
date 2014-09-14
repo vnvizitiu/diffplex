@@ -1,7 +1,5 @@
 ﻿using System.Web.Mvc;
 using DiffPlex;
-using DiffPlex.DiffBuilder;
-using DiffPlex.DiffBuilder.Model;
 using Moq;
 using WebDiffer.Controllers;
 using Xunit;

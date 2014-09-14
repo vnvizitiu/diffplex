@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace DiffPlex.DiffBuilder.Model
+namespace DiffPlex
 {
     public enum ChangeType
     {

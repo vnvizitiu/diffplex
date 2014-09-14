@@ -1,5 +1,4 @@
 ﻿using System;
-using DiffPlex.Model;
 
 namespace DiffPlex
 {

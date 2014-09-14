@@ -1,4 +1,4 @@
-﻿namespace DiffPlex.DiffBuilder.Model
+﻿namespace DiffPlex
 {
     /// <summary>
     /// A model which represents differences between to texts to be shown side by side
