@@ -6,10 +6,7 @@ namespace DiffPlex.ConsoleRunner
     {
         private static void Main(string[] args)
         {
-            var d = new Differ();
-            var inlineBuilder = new InlineDiffBuilder(d);
-            var result = inlineBuilder.BuildDiffModel(OldText, NewText);
-            foreach (var line in result.Lines)
+            foreach (var line in Diff.CompareLines(OldText, NewText).Inline.Lines)
             {
                 if(line.Type == ChangeType.Inserted)
                     Console.Write("+ ");
@@ -18,7 +15,7 @@ namespace DiffPlex.ConsoleRunner
                 else
                     Console.Write("  ");
 
-                Console.WriteLine(line.Text);
+                Console.Write(line.Text);
             }
         }
 

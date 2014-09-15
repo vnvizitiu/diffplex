@@ -7,6 +7,7 @@
 
     public static class Diff
     {
+        private static readonly char[] LineEndingCharacters = new char[] { '\r', '\n' };
         private static readonly Differ DifferInstance = new Differ();
         private static readonly InlineDiffBuilder InlineDiffBuilderInstance = new InlineDiffBuilder(DifferInstance);
         private static readonly SideBySideDiffBuilder SideBySideDiffBuilderInstance = new SideBySideDiffBuilder(DifferInstance);
@@ -19,6 +20,11 @@
             IgnoreWhitespace,
         }
 
+        public static CompareResult CompareLines(string before, string after, Options options = Options.None)
+        {
+            return CompareLines(SplitIntoLines(before), SplitIntoLines(after), options);
+        }
+
         public static CompareResult CompareLines(IList<string> before, IList<string> after, Options options = Options.None)
         {
             var beforeData = new ModificationData(before);
@@ -26,6 +32,50 @@
 
             DiffResult diffResult = Differ.CreateCustomDiffs(beforeData, afterData, options.HasFlag(Options.IgnoreWhitespace), options.HasFlag(Options.IgnoreCase));
             return new CompareResult(diffResult);
+        }
+
+        /// <summary>
+        /// Splits a large text blob into a list of lines.
+        /// Whitespace (including the line endings) is preserved.
+        /// Line endings may be \r, \n, \r\n, or \n\r
+        /// </summary>
+        /// <param name="text">The text to split up.</param>
+        /// <returns>The array of lines.</returns>
+        private static IList<string> SplitIntoLines(string text)
+        {
+            var lines = new List<string>();
+            int start = 0;
+            while (start < text.Length)
+            {
+                // Find the next line ending.
+                int next = text.IndexOfAny(LineEndingCharacters, start);
+                if (next < 0)
+                {
+                    lines.Add(text.Substring(start));
+                    break;
+                }
+
+                int lineEndingSequenceLength = 1;
+
+                // Check to see if this is a two character line ending.
+                int peek = next + 1;
+                if (text.Length > peek)
+                {
+                    char nextCharacter = text[peek];
+                    int nextLineEndingCharacter = Array.IndexOf(LineEndingCharacters, nextCharacter);
+                    if (nextLineEndingCharacter >= 0 && nextCharacter != text[next])
+                    {
+                        lineEndingSequenceLength++;
+                    }
+                }
+
+                int lineLength = next + lineEndingSequenceLength - start;
+                string line = text.Substring(start, lineLength);
+                lines.Add(line);
+                start += lineLength;
+            }
+
+            return lines;
         }
 
         public class CompareResult

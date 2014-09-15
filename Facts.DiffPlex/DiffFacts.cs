@@ -43,5 +43,39 @@ namespace Facts.DiffPlex
             Assert.True(result.Inline.Lines.Skip(1).All(l => l.Type == ChangeType.Unchanged));
             Assert.Equal(this.baselineContent, result.Inline.Lines.Skip(1).Select(l => l.Text));
         }
+
+        [Fact]
+        public void CompareLines_SingleString_ExactlyEqual()
+        {
+            string[] lineEndingSequences = new string[] { "\n", "\r", "\r\n" };
+            foreach (string lineEndingSequence in lineEndingSequences)
+            {
+                string baseline = string.Join(lineEndingSequence, this.baselineContent);
+                var result = Diff.CompareLines(baseline, baseline);
+                Assert.Equal(this.baselineContent.Count, result.Inline.Lines.Count);
+                Assert.True(result.Inline.Lines.All(l => l.Type == ChangeType.Unchanged));
+            }
+        }
+
+        [Fact]
+        public void CompareLines_SingleString_VaryingLineEndings()
+        {
+            string[] lineEndingSequences = new string[] { "\n", "\r" };
+            foreach (string lineEndingSequence in lineEndingSequences)
+            {
+                string baseline = string.Join(lineEndingSequence, this.baselineContent);
+                string changed = string.Join("\r\n", this.baselineContent);
+
+                var result = Diff.CompareLines(baseline, changed);
+                Assert.Equal(5, result.Inline.Lines.Count);
+                Assert.True(result.Inline.Lines.Take(2).All(l => l.Type == ChangeType.Deleted));
+                Assert.True(result.Inline.Lines.Skip(2).Take(2).All(l => l.Type == ChangeType.Inserted));
+                Assert.True(result.Inline.Lines.Skip(5).All(l => l.Type == ChangeType.Unchanged));
+
+                result = Diff.CompareLines(baseline, changed, Diff.Options.IgnoreWhitespace);
+                Assert.Equal(this.baselineContent.Count, result.Inline.Lines.Count);
+                Assert.True(result.Inline.Lines.All(l => l.Type == ChangeType.Unchanged));
+            }
+        }
     }
 }
