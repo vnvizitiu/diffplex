@@ -74,14 +74,17 @@ namespace DiffPlex
             if (newText == null) throw new ArgumentNullException("newText");
             if (chunker == null) throw new ArgumentNullException("chunker");
 
+            var modOld = new ModificationData(SplitPieces(oldText, chunker));
+            var modNew = new ModificationData(SplitPieces(newText, chunker));
+
+            return CreateCustomDiffs(modOld, modNew, ignoreWhiteSpace, ignoreCase);
+        }
+
+        internal static DiffResult CreateCustomDiffs(ModificationData modOld, ModificationData modNew, bool ignoreWhiteSpace, bool ignoreCase)
+        {
             var pieceHash = new Dictionary<string, int>();
-            var lineDiffs = new List<DiffBlock>();
-
-            var modOld = new ModificationData(oldText);
-            var modNew = new ModificationData(newText);
-
-            BuildPieceHashes(pieceHash, modOld, ignoreWhiteSpace, ignoreCase, chunker);
-            BuildPieceHashes(pieceHash, modNew, ignoreWhiteSpace, ignoreCase, chunker);
+            AddPieceHashes(modOld, ignoreWhiteSpace, ignoreCase, pieceHash);
+            AddPieceHashes(modNew, ignoreWhiteSpace, ignoreCase, pieceHash);
 
             BuildModificationData(modOld, modNew);
 
@@ -90,6 +93,7 @@ namespace DiffPlex
             int posA = 0;
             int posB = 0;
 
+            var lineDiffs = new List<DiffBlock>();
             do
             {
                 while (posA < piecesALength
@@ -372,22 +376,23 @@ namespace DiffPlex
             }
         }
 
-        private static void BuildPieceHashes(IDictionary<string, int> pieceHash, ModificationData data, bool ignoreWhitespace, bool ignoreCase, Func<string, string[]> chunker)
+        private static string[] SplitPieces(string text, Func<string, string[]> chunker)
         {
             string[] pieces;
 
-            if (string.IsNullOrEmpty(data.RawData))
+            if (string.IsNullOrEmpty(text))
                 pieces = new string[0];
             else
-                pieces = chunker(data.RawData);
+                pieces = chunker(text);
 
-            data.Pieces = pieces;
-            data.HashedPieces = new int[pieces.Length];
-            data.Modifications = new bool[pieces.Length];
+            return pieces;
+        }
 
-            for (int i = 0; i < pieces.Length; i++)
+        private static void AddPieceHashes(ModificationData data, bool ignoreWhitespace, bool ignoreCase, IDictionary<string, int> pieceHash)
+        {
+            for (int i = 0; i < data.Pieces.Length; i++)
             {
-                string piece = pieces[i];
+                string piece = data.Pieces[i];
                 if (ignoreWhitespace) piece = piece.Trim();
                 if (ignoreCase) piece = piece.ToUpperInvariant();
 

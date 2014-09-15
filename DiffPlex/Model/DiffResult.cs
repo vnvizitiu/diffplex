@@ -21,7 +21,7 @@ namespace DiffPlex
         /// <summary>
         /// A collection of DiffBlocks which details deletions and insertions
         /// </summary>
-        public IList<DiffBlock> DiffBlocks { get; private set; }
+        public ReadOnlyCollection<DiffBlock> DiffBlocks { get; private set; }
 
         public DiffResult(string[] piecesOld, string[] piecesNew, IList<DiffBlock> blocks)
         {

@@ -21,18 +21,53 @@
 
         public static class Lines
         {
-            public static DiffResult Compare(string[] before, string[] after, Options options = Options.None)
+            public static CompareResult Compare(string[] before, string[] after, Options options = Options.None)
             {
-                // TODO: do something with options.
-                // The currently exposed API in other classes makes this difficult or impossible.
-                throw new NotImplementedException();
+                var beforeData = new ModificationData(before);
+                var afterData = new ModificationData(after);
+
+                DiffResult diffResult = Differ.CreateCustomDiffs(beforeData, afterData, options.HasFlag(Options.IgnoreWhitespace), options.HasFlag(Options.IgnoreCase));
+                return new CompareResult(diffResult);
             }
 
-            public class DiffResult
+            public class CompareResult
             {
-                public DiffPaneModel Inline { get; private set; }
+                private readonly DiffResult result;
+                private DiffPaneModel inline;
+                private SideBySideDiffModel sideBySide;
 
-                public SideBySideDiffModel SideBySide { get; private set; }
+                public CompareResult(DiffResult result)
+                {
+                    this.result = result;
+                }
+
+                public DiffPaneModel Inline
+                {
+                    get
+                    {
+                        if (this.inline == null)
+                        {
+                            var inline = new DiffPaneModel();
+                            inline.Lines.AddRange(InlineDiffBuilder.BuildDiffPieces(this.result));
+                            this.inline = inline;
+                        }
+
+                        return this.inline;
+                    }
+                }
+
+                public SideBySideDiffModel SideBySide
+                {
+                    get
+                    {
+                        if (this.sideBySide == null)
+                        {
+                            this.sideBySide = SideBySideDiffBuilderInstance.BuildLineDiff(this.result);
+                        }
+
+                        return this.sideBySide;
+                    }
+                }
             }
         }
     }

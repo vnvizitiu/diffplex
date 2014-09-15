@@ -9,7 +9,7 @@ namespace DiffPlex
 
         delegate void PieceBuilder(string oldText, string newText, List<DiffPiece> oldPieces, List<DiffPiece> newPieces);
 
-        public static readonly char[] WordSeparaters = new[] {' ', '\t', '.', '(', ')', '{', '}', ','};
+        public static readonly char[] WordSeparaters = new[] { ' ', '\t', '.', '(', ')', '{', '}', ',' };
 
         public SideBySideDiffBuilder(IDiffer differ)
         {
@@ -23,14 +23,18 @@ namespace DiffPlex
             if (oldText == null) throw new ArgumentNullException("oldText");
             if (newText == null) throw new ArgumentNullException("newText");
 
-            return BuildLineDiff(oldText, newText);
+            var diffResult = differ.CreateLineDiffs(oldText, newText, true);
+            return BuildLineDiff(diffResult);
         }
 
-        private SideBySideDiffModel BuildLineDiff(string oldText, string newText)
+        internal SideBySideDiffModel BuildLineDiff(DiffResult diffResult)
         {
+            var oldPieces = new List<DiffPiece>();
+            var newPieces = new List<DiffPiece>();
+            BuildDiffPieces(diffResult, oldPieces, newPieces, BuildWordDiffPieces);
             var model = new SideBySideDiffModel();
-            var diffResult = differ.CreateLineDiffs(oldText, newText, true);
-            BuildDiffPieces(diffResult, model.OldText.Lines, model.NewText.Lines, BuildWordDiffPieces);
+            model.OldText.Lines.AddRange(oldPieces);
+            model.NewText.Lines.AddRange(newPieces);
             return model;
         }
 

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace DiffPlex
 {
@@ -8,7 +9,7 @@ namespace DiffPlex
 
         public DiffPaneModel()
         {
-            Lines = new List<DiffPiece>();
+            this.Lines = new List<DiffPiece>();
         }
     }
 }

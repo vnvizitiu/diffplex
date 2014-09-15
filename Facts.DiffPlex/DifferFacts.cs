@@ -619,8 +619,8 @@ namespace Facts.DiffPlex
             public void Will_return_empty_modifications_for_empty_strings()
             {
                 var differ = new TestableDiffer();
-                var a = new ModificationData("");
-                var b = new ModificationData("");
+                var a = new ModificationData();
+                var b = new ModificationData();
                 a.HashedPieces = new int[0];
                 b.HashedPieces = new int[0];
                 a.Modifications = new bool[a.HashedPieces.Length];
@@ -636,8 +636,8 @@ namespace Facts.DiffPlex
             public void Will_return_all_modifications_for_empty_vs_non_empty_string()
             {
                 var differ = new TestableDiffer();
-                var a = new ModificationData("");
-                var b = new ModificationData("cat\nhat\npat\nmatt");
+                var a = new ModificationData();
+                var b = new ModificationData();
                 a.HashedPieces = new int[] { };
                 b.HashedPieces = new[] { 1, 2, 3, 4 };
                 a.Modifications = new bool[a.HashedPieces.Length];
@@ -655,8 +655,8 @@ namespace Facts.DiffPlex
             public void Will_return_all_modifications_for_non_empty_vs_empty_string()
             {
                 var differ = new TestableDiffer();
-                var a = new ModificationData("cat\nhat\npat\nmatt");
-                var b = new ModificationData("");
+                var a = new ModificationData();
+                var b = new ModificationData();
                 a.HashedPieces = new[] { 1, 2, 3, 4 };
                 b.HashedPieces = new int[] { };
                 a.Modifications = new bool[a.HashedPieces.Length];
@@ -674,8 +674,8 @@ namespace Facts.DiffPlex
             public void Will_return_no_modifications_for_same_strings()
             {
                 var differ = new TestableDiffer();
-                var a = new ModificationData("cat\nhat\npat\nmatt");
-                var b = new ModificationData("cat\nhat\npat\nmatt");
+                var a = new ModificationData();
+                var b = new ModificationData();
                 a.HashedPieces = new[] { 1, 2, 3, 4 };
                 b.HashedPieces = new[] { 1, 2, 3, 4 };
                 a.Modifications = new bool[a.HashedPieces.Length];
@@ -697,8 +697,8 @@ namespace Facts.DiffPlex
             public void Will_return_all_modifications_for_unique_strings()
             {
                 var differ = new TestableDiffer();
-                var a = new ModificationData("cat\nhat\npat\nmatt");
-                var b = new ModificationData("door\nfloor\nbore\nmore");
+                var a = new ModificationData();
+                var b = new ModificationData();
                 a.HashedPieces = new[] { 1, 2, 3, 4 };
                 b.HashedPieces = new[] { 5, 6, 7, 8 };
                 a.Modifications = new bool[a.HashedPieces.Length];
@@ -720,8 +720,8 @@ namespace Facts.DiffPlex
             public void Will_return_correct_modifications_two_partially_similiar_strings()
             {
                 var differ = new TestableDiffer();
-                var a = new ModificationData("cat\nhat\npat\nmatt");
-                var b = new ModificationData("cat\nmatt\ntac");
+                var a = new ModificationData();
+                var b = new ModificationData();
                 a.HashedPieces = new[] { 1, 2, 3, 4 };
                 b.HashedPieces = new[] { 1, 4, 5 };
                 a.Modifications = new bool[a.HashedPieces.Length];
@@ -743,8 +743,8 @@ namespace Facts.DiffPlex
             public void Will_return_correct_modifications_for_strings_with_two_differences()
             {
                 var differ = new TestableDiffer();
-                var a = new ModificationData("cat\nfat\ntac");
-                var b = new ModificationData("cat\nmatt\ntac");
+                var a = new ModificationData();
+                var b = new ModificationData();
                 a.HashedPieces = new[] { 1, 2, 3 };
                 b.HashedPieces = new[] { 1, 4, 3 };
                 a.Modifications = new bool[a.HashedPieces.Length];
@@ -765,8 +765,8 @@ namespace Facts.DiffPlex
             public void Will_return_correct_modifications_for_strings_with_one_difference()
             {
                 var differ = new TestableDiffer();
-                var a = new ModificationData("matt\ncat\nhat\n");
-                var b = new ModificationData("matt\ncat\ntat\nhat\n");
+                var a = new ModificationData();
+                var b = new ModificationData();
                 a.HashedPieces = new[] { 1, 2, 3 };
                 b.HashedPieces = new[] { 1, 2, 4, 3 };
                 a.Modifications = new bool[a.HashedPieces.Length];
@@ -789,8 +789,8 @@ namespace Facts.DiffPlex
             public void Will_return_correct_modifications_count_for_random_data(int[] aLines, int[] bLines, int editLength)
             {
                 var differ = new TestableDiffer();
-                var a = new ModificationData("");
-                var b = new ModificationData("");
+                var a = new ModificationData();
+                var b = new ModificationData();
                 a.HashedPieces = aLines;
                 b.HashedPieces = bLines;
                 a.Modifications = new bool[aLines.Length];
