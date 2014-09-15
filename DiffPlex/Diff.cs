@@ -19,54 +19,51 @@
             IgnoreWhitespace,
         }
 
-        public static class Lines
+        public static CompareResult CompareLines(IList<string> before, IList<string> after, Options options = Options.None)
         {
-            public static CompareResult Compare(IList<string> before, IList<string> after, Options options = Options.None)
-            {
-                var beforeData = new ModificationData(before);
-                var afterData = new ModificationData(after);
+            var beforeData = new ModificationData(before);
+            var afterData = new ModificationData(after);
 
-                DiffResult diffResult = Differ.CreateCustomDiffs(beforeData, afterData, options.HasFlag(Options.IgnoreWhitespace), options.HasFlag(Options.IgnoreCase));
-                return new CompareResult(diffResult);
+            DiffResult diffResult = Differ.CreateCustomDiffs(beforeData, afterData, options.HasFlag(Options.IgnoreWhitespace), options.HasFlag(Options.IgnoreCase));
+            return new CompareResult(diffResult);
+        }
+
+        public class CompareResult
+        {
+            private readonly DiffResult result;
+            private DiffPaneModel inline;
+            private SideBySideDiffModel sideBySide;
+
+            public CompareResult(DiffResult result)
+            {
+                this.result = result;
             }
 
-            public class CompareResult
+            public DiffPaneModel Inline
             {
-                private readonly DiffResult result;
-                private DiffPaneModel inline;
-                private SideBySideDiffModel sideBySide;
-
-                public CompareResult(DiffResult result)
+                get
                 {
-                    this.result = result;
-                }
-
-                public DiffPaneModel Inline
-                {
-                    get
+                    if (this.inline == null)
                     {
-                        if (this.inline == null)
-                        {
-                            var inline = new DiffPaneModel();
-                            inline.Lines.AddRange(InlineDiffBuilder.BuildDiffPieces(this.result));
-                            this.inline = inline;
-                        }
-
-                        return this.inline;
+                        var inline = new DiffPaneModel();
+                        inline.Lines.AddRange(InlineDiffBuilder.BuildDiffPieces(this.result));
+                        this.inline = inline;
                     }
+
+                    return this.inline;
                 }
+            }
 
-                public SideBySideDiffModel SideBySide
+            public SideBySideDiffModel SideBySide
+            {
+                get
                 {
-                    get
+                    if (this.sideBySide == null)
                     {
-                        if (this.sideBySide == null)
-                        {
-                            this.sideBySide = SideBySideDiffBuilderInstance.BuildLineDiff(this.result);
-                        }
-
-                        return this.sideBySide;
+                        this.sideBySide = SideBySideDiffBuilderInstance.BuildLineDiff(this.result);
                     }
+
+                    return this.sideBySide;
                 }
             }
         }

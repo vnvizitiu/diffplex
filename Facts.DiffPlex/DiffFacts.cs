@@ -21,9 +21,9 @@ namespace Facts.DiffPlex
         }
 
         [Fact]
-        public void LinesCompare_Unchanged()
+        public void CompareLines_Unchanged()
         {
-            var result = Diff.Lines.Compare(this.baselineContent, this.baselineContent);
+            var result = Diff.CompareLines(this.baselineContent, this.baselineContent);
             Assert.NotNull(result);
             Assert.Equal(3, result.Inline.Lines.Count);
             Assert.True(result.Inline.Lines.All(l => l.Type == ChangeType.Unchanged));
@@ -31,11 +31,11 @@ namespace Facts.DiffPlex
         }
 
         [Fact]
-        public void LinesCompare_AddedTopLine()
+        public void CompareLines_AddedTopLine()
         {
             var after = this.baselineContent.ToList();
             after.Insert(0, "foo");
-            var result = Diff.Lines.Compare(this.baselineContent, after);
+            var result = Diff.CompareLines(this.baselineContent, after);
             Assert.NotNull(result);
             Assert.Equal(4, result.Inline.Lines.Count);
             Assert.Equal(ChangeType.Inserted, result.Inline.Lines[0].Type);
