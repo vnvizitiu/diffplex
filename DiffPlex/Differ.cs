@@ -390,7 +390,7 @@ namespace DiffPlex
 
         private static void AddPieceHashes(ModificationData data, bool ignoreWhitespace, bool ignoreCase, IDictionary<string, int> pieceHash)
         {
-            for (int i = 0; i < data.Pieces.Length; i++)
+            for (int i = 0; i < data.Pieces.Count; i++)
             {
                 string piece = data.Pieces[i];
                 if (ignoreWhitespace) piece = piece.Trim();

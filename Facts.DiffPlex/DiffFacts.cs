@@ -9,15 +9,15 @@ namespace Facts.DiffPlex
 {
     public class DiffFacts
     {
-        private string[] baselineContent;
+        private IList<string> baselineContent;
 
         public DiffFacts()
         {
-            this.baselineContent = new[] {
-                    "abc",
-                    "def",
-                    "ghi",
-                };
+            this.baselineContent = new List<string> {
+                "abc",
+                "def",
+                "ghi",
+            };
         }
 
         [Fact]
@@ -35,7 +35,7 @@ namespace Facts.DiffPlex
         {
             var after = this.baselineContent.ToList();
             after.Insert(0, "foo");
-            var result = Diff.Lines.Compare(this.baselineContent, after.ToArray());
+            var result = Diff.Lines.Compare(this.baselineContent, after);
             Assert.NotNull(result);
             Assert.Equal(4, result.Inline.Lines.Count);
             Assert.Equal(ChangeType.Inserted, result.Inline.Lines[0].Type);

@@ -23,7 +23,7 @@ namespace DiffPlex
         /// </summary>
         public ReadOnlyCollection<DiffBlock> DiffBlocks { get; private set; }
 
-        public DiffResult(string[] piecesOld, string[] piecesNew, IList<DiffBlock> blocks)
+        public DiffResult(IList<string> piecesOld, IList<string> piecesNew, IList<DiffBlock> blocks)
         {
             PiecesOld = new ReadOnlyCollection<string>(piecesOld);
             PiecesNew = new ReadOnlyCollection<string>(piecesNew);

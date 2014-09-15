@@ -21,7 +21,7 @@
 
         public static class Lines
         {
-            public static CompareResult Compare(string[] before, string[] after, Options options = Options.None)
+            public static CompareResult Compare(IList<string> before, IList<string> after, Options options = Options.None)
             {
                 var beforeData = new ModificationData(before);
                 var afterData = new ModificationData(after);
