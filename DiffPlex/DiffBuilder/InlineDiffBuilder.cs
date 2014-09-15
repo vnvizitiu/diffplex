@@ -61,7 +61,7 @@ namespace DiffPlex
                 }
             }
 
-            for (; bPos < diffResult.PiecesNew.Length; bPos++)
+            for (; bPos < diffResult.PiecesNew.Count; bPos++)
                 pieces.Add(new DiffPiece(diffResult.PiecesNew[bPos], ChangeType.Unchanged, bPos + 1));
         }
     }

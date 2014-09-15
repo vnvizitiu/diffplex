@@ -25,7 +25,6 @@
         /// </summary>
         public int InsertCountB { get; private set; }
 
-
         public DiffBlock(int deleteStartA, int deleteCountA, int insertStartB, int insertCountB)
         {
             DeleteStartA = deleteStartA;

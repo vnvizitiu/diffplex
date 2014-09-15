@@ -17,7 +17,7 @@ namespace DiffPlex
             if (newText == null) throw new ArgumentNullException("newText");
 
 
-            return CreateCustomDiffs(oldText, newText, ignoreWhitespace,ignoreCase, str => NormalizeNewlines(str).Split('\n'));
+            return CreateCustomDiffs(oldText, newText, ignoreWhitespace, ignoreCase, str => NormalizeNewlines(str).Split('\n'));
         }
 
         public DiffResult CreateCharacterDiffs(string oldText, string newText, bool ignoreWhitespace)
@@ -37,11 +37,11 @@ namespace DiffPlex
                 ignoreWhitespace,
                 ignoreCase,
                 str =>
-                    {
-                        var s = new string[str.Length];
-                        for (int i = 0; i < str.Length; i++) s[i] = str[i].ToString();
-                        return s;
-                    });
+                {
+                    var s = new string[str.Length];
+                    for (int i = 0; i < str.Length; i++) s[i] = str[i].ToString();
+                    return s;
+                });
         }
 
         public DiffResult CreateWordDiffs(string oldText, string newText, bool ignoreWhitespace, char[] separators)
@@ -233,13 +233,13 @@ namespace DiffPlex
                             revY = revX - k;
                             if (revX <= x && revY <= y)
                             {
-                                var res = new EditLengthResult();
-                                res.EditLength = 2 * D - 1;
-                                res.StartX = startX + startA;
-                                res.StartY = startY + startB;
-                                res.EndX = x + startA;
-                                res.EndY = y + startB;
-                                res.LastEdit = lastEdit;
+                                var res = new EditLengthResult(
+                                    editLength: 2 * D - 1,
+                                    startX: startX + startA,
+                                    startY: startY + startB,
+                                    endX: x + startA,
+                                    endY: y + startB,
+                                    lastEdit: lastEdit);
                                 return res;
                             }
                         }
@@ -290,13 +290,13 @@ namespace DiffPlex
                             forY = forX - (k + delta);
                             if (forX >= x && forY >= y)
                             {
-                                var res = new EditLengthResult();
-                                res.EditLength = 2 * D;
-                                res.StartX = x + startA;
-                                res.StartY = y + startB;
-                                res.EndX = endX + startA;
-                                res.EndY = endY + startB;
-                                res.LastEdit = lastEdit;
+                                var res = new EditLengthResult(
+                                    editLength: 2 * D,
+                                    startX: x + startA,
+                                    startY: y + startB,
+                                    endX: endX + startA,
+                                    endY: endY + startB,
+                                    lastEdit: lastEdit);
                                 return res;
                             }
                         }
@@ -339,7 +339,7 @@ namespace DiffPlex
                 endA--;
                 endB--;
             }
-               
+
             int aLength = endA - startA;
             int bLength = endB - startB;
             if (aLength > 0 && bLength > 0)
