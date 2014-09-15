@@ -12,11 +12,25 @@
         private static readonly InlineDiffBuilder InlineDiffBuilderInstance = new InlineDiffBuilder(DifferInstance);
         private static readonly SideBySideDiffBuilder SideBySideDiffBuilderInstance = new SideBySideDiffBuilder(DifferInstance);
 
+        /// <summary>
+        /// Customizations applicable to comparing two strings.
+        /// </summary>
         [Flags]
         public enum Options
         {
+            /// <summary>
+            /// Any differences between two lines are considered significant.
+            /// </summary>
             None,
+            
+            /// <summary>
+            /// Differences in capitalization between two lines are not considered significant.
+            /// </summary>
             IgnoreCase,
+            
+            /// <summary>
+            /// Differences in leading or trailing whitespace between two lines are not considered significant.
+            /// </summary>
             IgnoreWhitespace,
         }
 
