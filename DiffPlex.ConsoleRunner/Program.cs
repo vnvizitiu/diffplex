@@ -6,7 +6,7 @@ namespace DiffPlex.ConsoleRunner
     {
         private static void Main(string[] args)
         {
-            foreach (var line in Diff.CompareLines(OldText, NewText).Inline.Lines)
+            foreach (var line in Diff.CompareLines(OldText, NewText).Inline)
             {
                 if(line.Type == ChangeType.Inserted)
                     Console.Write("+ ");

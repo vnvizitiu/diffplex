@@ -86,10 +86,14 @@
 
             public CompareResult(DiffResult result)
             {
+                if (result == null) throw new ArgumentNullException("result");
                 this.result = result;
             }
 
-            public DiffPaneModel Inline
+            /// <summary>
+            /// Gets a list of all lines (before and after) with diff metadata.
+            /// </summary>
+            public IList<DiffPiece> Inline
             {
                 get
                 {
@@ -100,11 +104,30 @@
                         this.inline = inline;
                     }
 
-                    return this.inline;
+                    return this.inline.Lines;
                 }
             }
 
-            public SideBySideDiffModel SideBySide
+            /// <summary>
+            /// Gets the lines that appear on the left pane of a side-by-side view.
+            /// </summary>
+            public IList<DiffPiece> LeftSide
+            {
+                get { return this.SideBySide.OldText.Lines; }
+            }
+
+            /// <summary>
+            /// Gets the lines that appear on the right pane of a side-by-side view.
+            /// </summary>
+            public IList<DiffPiece> RightSide
+            {
+                get { return this.SideBySide.NewText.Lines; }
+            }
+
+            /// <summary>
+            /// Gets an object that describes the left and right sides of a comparison window.
+            /// </summary>
+            private SideBySideDiffModel SideBySide
             {
                 get
                 {
