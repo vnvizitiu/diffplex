@@ -6,15 +6,15 @@ using System.Threading;
 
 namespace Perf.DiffPlex
 {
-    public class    LoadTester
+    public class LoadTester
     {
         private readonly Action action;
-        static bool everyoneDie;
+        private static bool everyoneDie;
         private int threadCount;
         private int errorCount;
         private readonly Stopwatch overallTimer = new Stopwatch();
         private readonly List<long> times = new List<long>();
-        private ReaderWriterLockSlim signal = new ReaderWriterLockSlim();
+        private readonly ReaderWriterLockSlim signal = new ReaderWriterLockSlim();
 
         public LoadTester(Action action)
         {
