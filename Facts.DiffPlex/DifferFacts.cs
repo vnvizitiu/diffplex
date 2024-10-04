@@ -12,27 +12,6 @@ namespace Facts.DiffPlex
     {
         public class CreateCustomDiffs
         {
-            [Fact]
-            public void Will_throw_if_oldText_is_null()
-            {
-                var differ = new TestableDiffer();
-
-                var ex = Record.Exception(() => differ.CreateCustomDiffs(null, "someString", false, null)) as ArgumentNullException;
-
-                Assert.NotNull(ex);
-                Assert.Equal("oldText", ex.ParamName);
-            }
-
-            [Fact]
-            public void Will_throw_if_newText_is_null()
-            {
-                var differ = new TestableDiffer();
-
-                var ex = Record.Exception(() => differ.CreateCustomDiffs("someString", null, false, null)) as ArgumentNullException;
-
-                Assert.NotNull(ex);
-                Assert.Equal("newText", ex.ParamName);
-            }
 
             [Fact]
             public void Will_throw_if_chunker_is_null()
@@ -42,7 +21,7 @@ namespace Facts.DiffPlex
                 var ex = Record.Exception(() => differ.CreateCustomDiffs("someString", "otherString", false, null)) as ArgumentNullException;
 
                 Assert.NotNull(ex);
-                Assert.Equal("chunker", ex.ParamName);
+                Assert.Equal("customChunkerFunc", ex.ParamName);
             }
         }
 
@@ -556,18 +535,96 @@ namespace Facts.DiffPlex
                 var res = differ.CreateWordDiffs(string.Format("z{0}a{0}{0}", ' '), string.Format("z{0}v{0}{0}", ';'), false, new[] { ' ', ';' });
 
                 Assert.NotNull(res);
-                Assert.Equal(2, res.DiffBlocks.Count);
+                Assert.Equal(1, res.DiffBlocks.Count);
 
                 Assert.Equal(1, res.DiffBlocks[0].DeleteStartA);
                 Assert.Equal(3, res.DiffBlocks[0].DeleteCountA);
                 Assert.Equal(1, res.DiffBlocks[0].InsertStartB);
                 Assert.Equal(3, res.DiffBlocks[0].InsertCountB);
+            }
 
+            [Fact]
+            public void Will_return_correct_diff_for_multiple_chained_separators()
+            {
+                var differ = new TestableDiffer();
 
-                Assert.Equal(5, res.DiffBlocks[1].DeleteStartA);
-                Assert.Equal(1, res.DiffBlocks[1].DeleteCountA);
-                Assert.Equal(5, res.DiffBlocks[1].InsertStartB);
-                Assert.Equal(1, res.DiffBlocks[1].InsertCountB);
+                var res = differ.CreateWordDiffs("z a       ", "z a", false, new[] { ' ' });
+
+                Assert.NotNull(res);
+                Assert.Equal(1, res.DiffBlocks.Count);
+
+                Assert.Equal(3, res.DiffBlocks[0].DeleteStartA);
+                Assert.Equal(1, res.DiffBlocks[0].DeleteCountA);
+                Assert.Equal(3, res.DiffBlocks[0].InsertStartB);
+                Assert.Equal(0, res.DiffBlocks[0].InsertCountB);
+            }
+
+            [Fact]
+            public void Will_return_correct_diff_for_multiple_chained_separators_ending_with_char()
+            {
+                var differ = new TestableDiffer();
+
+                var res = differ.CreateWordDiffs("z a       b", "z ab", false, new[] { ' ' });
+
+                Assert.NotNull(res);
+                Assert.Equal(1, res.DiffBlocks.Count);
+
+                Assert.Equal(2, res.DiffBlocks[0].DeleteStartA);
+                Assert.Equal(3, res.DiffBlocks[0].DeleteCountA);
+                Assert.Equal(2, res.DiffBlocks[0].InsertStartB);
+                Assert.Equal(1, res.DiffBlocks[0].InsertCountB);
+            }
+
+            [Fact]
+            public void Will_return_correct_diff_for_when_separator_in_the_end()
+            {
+                var differ = new TestableDiffer();
+
+                var res = differ.CreateWordDiffs("one line ", "second line ", false, new[] { ' ' });
+
+                Assert.NotNull(res);
+                Assert.Equal(1, res.DiffBlocks.Count);
+                Assert.Equal(res.PiecesOld, new List<string>() { "one", " ", "line", " " });
+                Assert.Equal(res.PiecesNew, new List<string>() { "second", " ", "line", " " });
+            }
+
+            [Fact]
+            public void Will_return_correct_diff_for_when_multiple_separators_in_the_end()
+            {
+                var differ = new TestableDiffer();
+
+                var res = differ.CreateWordDiffs("one line  ", "second line  ", false, new[] { ' ' });
+
+                Assert.NotNull(res);
+                Assert.Equal(1, res.DiffBlocks.Count);
+                Assert.Equal(res.PiecesOld, new List<string>() { "one", " ", "line", "  " });
+                Assert.Equal(res.PiecesNew, new List<string>() { "second", " ", "line", "  " });
+            }
+
+            [Fact]
+            public void Will_return_correct_diff_for_when_letter_in_the_end()
+            {
+                var differ = new TestableDiffer();
+
+                var res = differ.CreateWordDiffs("one lin e", "second lin e", false, new[] { ' ' });
+
+                Assert.NotNull(res);
+                Assert.Equal(1, res.DiffBlocks.Count);
+                Assert.Equal(res.PiecesOld, new List<string>() { "one", " ", "lin", " ", "e" });
+                Assert.Equal(res.PiecesNew, new List<string>() { "second", " ", "lin", " ", "e" });
+            }
+
+            [Fact]
+            public void Will_return_correct_diff_for_when_multiple_letters_in_the_end()
+            {
+                var differ = new TestableDiffer();
+
+                var res = differ.CreateWordDiffs("one line", "second line", false, new[] { ' ' });
+
+                Assert.NotNull(res);
+                Assert.Equal(1, res.DiffBlocks.Count);
+                Assert.Equal(res.PiecesOld, new List<string>() { "one", " ", "line" });
+                Assert.Equal(res.PiecesNew, new List<string>() { "second", " ", "line" });
             }
         }
 
@@ -586,8 +643,8 @@ namespace Facts.DiffPlex
 
                 differ.TestBuildModificationData(a, b);
 
-                Assert.Equal(0, a.Modifications.Length);
-                Assert.Equal(0, b.Modifications.Length);
+                Assert.Empty(a.Modifications);
+                Assert.Empty(b.Modifications);
             }
 
             [Fact]

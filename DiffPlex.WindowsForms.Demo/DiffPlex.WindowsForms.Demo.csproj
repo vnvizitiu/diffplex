@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFrameworks>net6.0-windows;net46</TargetFrameworks>
+    <UseWindowsForms>true</UseWindowsForms>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+    <ApplicationIcon>..\DiffPlex.ico</ApplicationIcon>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DiffPlex.Wpf\DiffPlex.Wpf.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\DiffPlex.Wpf.Demo\TestData.cs" Link="TestData.cs" />
+    <Content Include="..\DiffPlex.ico" Link="DiffPlex.ico" />
+  </ItemGroup>
+
+</Project>

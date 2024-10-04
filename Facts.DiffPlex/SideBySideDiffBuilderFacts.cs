@@ -14,13 +14,10 @@ namespace Facts.DiffPlex
         public class Constructor
         {
             [Fact]
-            public void Will_throw_is_IDiffer_is_null()
+            public void Will_not_throw_if_IDiffer_is_null()
             {
-                var ex = Record.Exception(() => new SideBySideDiffBuilder(null));
-
-                Assert.IsType<ArgumentNullException>(ex);
-                var an = (ArgumentNullException) ex;
-                Assert.Equal("differ", an.ParamName);
+                var builder = new SideBySideDiffBuilder(null);
+                Assert.NotNull(builder);
             }
         }
 
@@ -35,7 +32,7 @@ namespace Facts.DiffPlex
                 var ex = Record.Exception(() => builder.BuildDiffModel(null, "asd"));
 
                 Assert.IsType<ArgumentNullException>(ex);
-                var an = (ArgumentNullException) ex;
+                var an = (ArgumentNullException)ex;
                 Assert.Equal("oldText", an.ParamName);
             }
 
@@ -48,43 +45,19 @@ namespace Facts.DiffPlex
                 var ex = Record.Exception(() => builder.BuildDiffModel("asa", null));
 
                 Assert.IsType<ArgumentNullException>(ex);
-                var an = (ArgumentNullException) ex;
+                var an = (ArgumentNullException)ex;
                 Assert.Equal("newText", an.ParamName);
-            }
-
-
-            [Fact]
-            public void Will_pass_correct_word_separators_to_create_word_diff()
-            {
-                string text = "a\nb\nc\nd\n\n";
-                string[] textLines = {"a", "b", "c", "d", ""};
-                char[] chars = null;
-                var differ = new Mock<IDiffer>();
-                differ.Setup(x => x.CreateLineDiffs(text, text, true))
-                    .Returns(new DiffResult(textLines, textLines, new List<DiffBlock> {new DiffBlock(1, 1, 1, 1)}));
-                differ.Setup(x => x.CreateWordDiffs(It.IsAny<string>(), It.IsAny<string>(), false, It.IsAny<char[]>()))
-                    .Returns(new DiffResult(new string[0], new string[0], new List<DiffBlock>()))
-                    .Callback<string, string, bool, char[]>((a, b, c, d) => chars = d);
-                var builder = new SideBySideDiffBuilder(differ.Object);
-
-                builder.BuildDiffModel(text, text);
-
-                Assert.Equal(SideBySideDiffBuilder.WordSeparaters.Length, chars.Length);
-                foreach (var c in SideBySideDiffBuilder.WordSeparaters)
-                {
-                    Assert.Contains(c, chars);
-                }
             }
 
             [Fact]
             public void Will_build_diffModel_for_duplicate_strings()
             {
                 string text = "a\nb\nc\nd\n\n";
-                string[] textLines = {"a", "b", "c", "d", ""};
+                string[] textLines = { "a", "b", "c", "d", "" };
                 var differ = new Mock<IDiffer>();
-                differ.Setup(x => x.CreateLineDiffs(text, text, true))
+                differ.Setup(x => x.CreateDiffs(text, text, true, false, It.IsNotNull<IChunker>()))
                     .Returns(new DiffResult(textLines, textLines, new List<DiffBlock>()));
-                differ.Setup(x => x.CreateWordDiffs(It.IsAny<string>(), It.IsAny<string>(), false, It.IsAny<char[]>()))
+                differ.Setup(x => x.CreateDiffs(It.IsAny<string>(), It.IsAny<string>(), false, false, It.IsNotNull<IChunker>()))
                     .Returns(new DiffResult(new string[0], new string[0], new List<DiffBlock>()));
                 var builder = new SideBySideDiffBuilder(differ.Object);
 
@@ -102,6 +75,8 @@ namespace Facts.DiffPlex
                     Assert.Equal(ChangeType.Unchanged, bidiff.NewText.Lines[i].Type);
                     Assert.Equal(i + 1, bidiff.NewText.Lines[i].Position);
                 }
+
+                Assert.False(bidiff.OldText.HasDifferences && bidiff.NewText.HasDifferences);
             }
 
             [Fact]
@@ -109,12 +84,12 @@ namespace Facts.DiffPlex
             {
                 string textOld = "";
                 string textNew = "z\ny\nx\nw\n";
-                string[] textLinesOld = {};
-                string[] textLinesNew = {"z", "y"};
+                string[] textLinesOld = { };
+                string[] textLinesNew = { "z", "y" };
                 var differ = new Mock<IDiffer>();
-                differ.Setup(x => x.CreateLineDiffs(textOld, textNew, true))
-                    .Returns(new DiffResult(textLinesOld, textLinesNew, new List<DiffBlock> {new DiffBlock(0, 0, 0, 2)}));
-                differ.Setup(x => x.CreateWordDiffs(It.IsAny<string>(), It.IsAny<string>(), false, It.IsAny<char[]>()))
+                differ.Setup(x => x.CreateDiffs(textOld, textNew, true, false, It.IsNotNull<IChunker>()))
+                    .Returns(new DiffResult(textLinesOld, textLinesNew, new List<DiffBlock> { new DiffBlock(0, 0, 0, 2) }));
+                differ.Setup(x => x.CreateDiffs(It.IsAny<string>(), It.IsAny<string>(), false, false, It.IsNotNull<IChunker>()))
                     .Returns(new DiffResult(new string[0], new string[0], new List<DiffBlock>()));
                 var builder = new SideBySideDiffBuilder(differ.Object);
 
@@ -134,6 +109,8 @@ namespace Facts.DiffPlex
                     Assert.Equal(ChangeType.Imaginary, bidiff.OldText.Lines[j].Type);
                     Assert.False(bidiff.OldText.Lines[j].Position.HasValue);
                 }
+
+                Assert.True(bidiff.OldText.HasDifferences && bidiff.NewText.HasDifferences);
             }
 
             [Fact]
@@ -141,11 +118,11 @@ namespace Facts.DiffPlex
             {
                 string textNew = "";
                 string textOld = "z\ny\nx\nw\n";
-                string[] textLinesNew = {};
-                string[] textLinesOld = {"z", "y"};
+                string[] textLinesNew = { };
+                string[] textLinesOld = { "z", "y" };
                 var differ = new Mock<IDiffer>();
-                differ.Setup(x => x.CreateLineDiffs(textOld, textNew, true))
-                    .Returns(new DiffResult(textLinesOld, textLinesNew, new List<DiffBlock> {new DiffBlock(0, 2, 0, 0)}));
+                differ.Setup(x => x.CreateDiffs(textOld, textNew, true, false, It.IsNotNull<IChunker>()))
+                    .Returns(new DiffResult(textLinesOld, textLinesNew, new List<DiffBlock> { new DiffBlock(0, 2, 0, 0) }));
                 var builder = new SideBySideDiffBuilder(differ.Object);
 
                 var bidiff = builder.BuildDiffModel(textOld, textNew);
@@ -164,6 +141,8 @@ namespace Facts.DiffPlex
                     Assert.Equal(ChangeType.Imaginary, bidiff.NewText.Lines[j].Type);
                     Assert.False(bidiff.NewText.Lines[j].Position.HasValue);
                 }
+
+                Assert.True(bidiff.OldText.HasDifferences && bidiff.NewText.HasDifferences);
             }
 
             [Fact]
@@ -171,20 +150,15 @@ namespace Facts.DiffPlex
             {
                 string textOld = "a\nb\nc\nd\n\n";
                 string textNew = "z\ny\nx\nw\n";
-                string[] textLinesOld = {"a", "b", "c", "d", ""};
-                string[] textLinesNew = {"z", "y", "x", "w"};
-                var differ = new Mock<IDiffer>();
-                differ.Setup(x => x.CreateLineDiffs(textOld, textNew, true))
-                    .Returns(new DiffResult(textLinesOld, textLinesNew, new List<DiffBlock> {new DiffBlock(0, 5, 0, 4)}));
-                differ.Setup(x => x.CreateWordDiffs(It.IsAny<string>(), It.IsAny<string>(), false, It.IsAny<char[]>()))
-                    .Returns(new DiffResult(new string[0], new string[0], new List<DiffBlock>()));
-                var builder = new SideBySideDiffBuilder(differ.Object);
+                string[] textLinesOld = { "a", "b", "c", "d", "" };
+                string[] textLinesNew = { "z", "y", "x", "w" };
+                var builder = new SideBySideDiffBuilder();
 
                 var bidiff = builder.BuildDiffModel(textOld, textNew);
 
                 Assert.NotNull(bidiff);
-                Assert.Equal(5, bidiff.OldText.Lines.Count);
-                Assert.Equal(5, bidiff.NewText.Lines.Count);
+                Assert.Equal(6, bidiff.OldText.Lines.Count);
+                Assert.Equal(6, bidiff.NewText.Lines.Count);
                 int i = 0;
                 for (; i < Math.Min(textLinesOld.Length, textLinesNew.Length); i++)
                 {
@@ -223,6 +197,8 @@ namespace Facts.DiffPlex
                         Assert.False(bidiff.NewText.Lines[j].Position.HasValue);
                     }
                 }
+
+                Assert.True(bidiff.OldText.HasDifferences && bidiff.NewText.HasDifferences);
             }
 
             [Fact]
@@ -230,20 +206,15 @@ namespace Facts.DiffPlex
             {
                 string textOld = "1\n2\na\nb\nc\nd\n\n";
                 string textNew = "1\n2\nz\ny\nx\nw\n";
-                string[] textLinesOld = {"1", "2", "a", "b", "c", "d", ""};
-                string[] textLinesNew = {"1", "2", "z", "y", "x", "w"};
-                var differ = new Mock<IDiffer>();
-                differ.Setup(x => x.CreateLineDiffs(textOld, textNew, true))
-                    .Returns(new DiffResult(textLinesOld, textLinesNew, new List<DiffBlock> {new DiffBlock(2, 5, 2, 4)}));
-                differ.Setup(x => x.CreateWordDiffs(It.IsAny<string>(), It.IsAny<string>(), false, It.IsAny<char[]>()))
-                    .Returns(new DiffResult(new string[0], new string[0], new List<DiffBlock>()));
-                var builder = new SideBySideDiffBuilder(differ.Object);
+                string[] textLinesOld = { "1", "2", "a", "b", "c", "d", "" };
+                string[] textLinesNew = { "1", "2", "z", "y", "x", "w" };
+                var builder = new SideBySideDiffBuilder();
 
                 var bidiff = builder.BuildDiffModel(textOld, textNew);
 
                 Assert.NotNull(bidiff);
-                Assert.Equal(7, bidiff.OldText.Lines.Count);
-                Assert.Equal(7, bidiff.NewText.Lines.Count);
+                Assert.Equal(8, bidiff.OldText.Lines.Count);
+                Assert.Equal(8, bidiff.NewText.Lines.Count);
                 int i = 0;
                 for (; i < 2; i++)
                 {
@@ -293,42 +264,233 @@ namespace Facts.DiffPlex
                         Assert.False(bidiff.NewText.Lines[j].Position.HasValue);
                     }
                 }
+
+                Assert.True(bidiff.OldText.HasDifferences && bidiff.NewText.HasDifferences);
             }
 
+            [Fact]
+            public void Will_ignore_word_white_space()
+            {
+                string oldText = "My name is matt";
+                string newText = "My name is   matt";
+                var sideBySideDiffBuilder = new SideBySideDiffBuilder();
+                var sideBySideDiffModel = sideBySideDiffBuilder.BuildDiffModel(oldText, newText, true);
+
+                Assert.NotNull(sideBySideDiffModel);
+                Assert.Single(sideBySideDiffModel.OldText.Lines);
+                Assert.Single(sideBySideDiffModel.NewText.Lines);
+                Assert.False(sideBySideDiffModel.OldText.HasDifferences);
+                Assert.False(sideBySideDiffModel.NewText.HasDifferences);
+            }
+
+
+            [Fact]
+            public void Will_not_ignore_word_white_space()
+            {
+                string oldText = "My name is matt";
+                string newText = "My name is   matt";
+                var sideBySideDiffBuilder = new SideBySideDiffBuilder();
+                var sideBySideDiffModel = sideBySideDiffBuilder.BuildDiffModel(oldText, newText, false);
+
+                Assert.NotNull(sideBySideDiffModel);
+                Assert.Single(sideBySideDiffModel.OldText.Lines);
+                Assert.Single(sideBySideDiffModel.NewText.Lines);
+                Assert.True(sideBySideDiffModel.OldText.HasDifferences);
+                Assert.True(sideBySideDiffModel.NewText.HasDifferences);
+            }
 
             [Fact]
             public void Will_build_diffModel_for_partially_different_lines()
             {
                 string textOld = "m is h";
                 string textNew = "m ai is n h";
-                string[] textLinesOld = {"m is h"};
-                string[] textLinesNew = {"m ai is n h"};
-                var differ = new Mock<IDiffer>();
-                differ.Setup(x => x.CreateLineDiffs(textOld, textNew, true))
-                    .Returns(new DiffResult(textLinesOld, textLinesNew, new List<DiffBlock> {new DiffBlock(0, 1, 0, 1)}));
-                differ.Setup(x => x.CreateWordDiffs(It.IsAny<string>(), It.IsAny<string>(), false, It.IsAny<char[]>()))
-                    .Returns(new DiffResult(
-                                 new[] {"m ", "is ", "h"},
-                                 new[] {"m ", "ai ", "is ", "n ", "h"},
-                                 new List<DiffBlock> {new DiffBlock(1, 0, 1, 1), new DiffBlock(3, 0, 3, 1)}));
-                var builder = new SideBySideDiffBuilder(differ.Object);
+                string[] textLinesOld = { "m is h" };
+                string[] textLinesNew = { "m ai is n h" };
+
+                var builder = new SideBySideDiffBuilder(new Differ());
 
                 var bidiff = builder.BuildDiffModel(textOld, textNew);
 
                 Assert.NotNull(bidiff);
-                Assert.Equal(1, bidiff.OldText.Lines.Count);
-                Assert.Equal(1, bidiff.NewText.Lines.Count);
-                Assert.Equal(bidiff.NewText.Lines[0].SubPieces[0].Type, ChangeType.Unchanged);
-                Assert.Equal(bidiff.NewText.Lines[0].SubPieces[1].Type, ChangeType.Inserted);
-                Assert.Equal(bidiff.NewText.Lines[0].SubPieces[2].Type, ChangeType.Unchanged);
-                Assert.Equal(bidiff.NewText.Lines[0].SubPieces[3].Type, ChangeType.Inserted);
-                Assert.Equal(bidiff.NewText.Lines[0].SubPieces[4].Type, ChangeType.Unchanged);
+                Assert.Single(bidiff.OldText.Lines);
+                Assert.Single(bidiff.NewText.Lines);
+                Assert.Equal(ChangeType.Unchanged, bidiff.NewText.Lines[0].SubPieces[0].Type);
+                Assert.Equal(ChangeType.Unchanged, bidiff.NewText.Lines[0].SubPieces[1].Type);
+                Assert.Equal(ChangeType.Inserted, bidiff.NewText.Lines[0].SubPieces[2].Type);
+                Assert.Equal(ChangeType.Inserted, bidiff.NewText.Lines[0].SubPieces[3].Type);
+                Assert.Equal(ChangeType.Unchanged, bidiff.NewText.Lines[0].SubPieces[4].Type);
+                Assert.Equal(ChangeType.Inserted, bidiff.NewText.Lines[0].SubPieces[5].Type);
+                Assert.Equal(ChangeType.Inserted, bidiff.NewText.Lines[0].SubPieces[6].Type);
+                Assert.Equal(ChangeType.Unchanged, bidiff.NewText.Lines[0].SubPieces[7].Type);
+                Assert.Equal(ChangeType.Unchanged, bidiff.NewText.Lines[0].SubPieces[8].Type);
 
-                Assert.Equal(bidiff.OldText.Lines[0].SubPieces[0].Type, ChangeType.Unchanged);
-                Assert.Equal(bidiff.OldText.Lines[0].SubPieces[1].Type, ChangeType.Imaginary);
-                Assert.Equal(bidiff.OldText.Lines[0].SubPieces[2].Type, ChangeType.Unchanged);
-                Assert.Equal(bidiff.OldText.Lines[0].SubPieces[3].Type, ChangeType.Imaginary);
-                Assert.Equal(bidiff.OldText.Lines[0].SubPieces[4].Type, ChangeType.Unchanged);
+                Assert.Equal(ChangeType.Unchanged, bidiff.OldText.Lines[0].SubPieces[0].Type);
+                Assert.Equal(ChangeType.Unchanged, bidiff.OldText.Lines[0].SubPieces[1].Type);
+                Assert.Equal(ChangeType.Imaginary, bidiff.OldText.Lines[0].SubPieces[2].Type);
+                Assert.Equal(ChangeType.Imaginary, bidiff.OldText.Lines[0].SubPieces[3].Type);
+                Assert.Equal(ChangeType.Unchanged, bidiff.OldText.Lines[0].SubPieces[4].Type);
+
+                Assert.True(bidiff.OldText.HasDifferences && bidiff.NewText.HasDifferences);
+            }
+
+            [Fact]
+            public void Will_ignore_whitespace_by_default_1()
+            {
+                string textOld = "1\n 2\n3 \n 4 \n5";
+                string textNew = "1\n2\n3\n4\n5";
+                var builder = new SideBySideDiffBuilder(new Differ());
+                var model = builder.BuildDiffModel(textOld, textNew);
+                Assert.Equal(
+                    model.OldText.Lines,
+                    new DiffPiece[]
+                    {
+                        new DiffPiece("1", ChangeType.Unchanged, 1),
+                        new DiffPiece(" 2", ChangeType.Unchanged, 2),
+                        new DiffPiece("3 ", ChangeType.Unchanged, 3),
+                        new DiffPiece(" 4 ", ChangeType.Unchanged, 4),
+                        new DiffPiece("5", ChangeType.Unchanged, 5),
+                    });
+                Assert.Equal(
+                    model.NewText.Lines,
+                    new DiffPiece[]
+                    {
+                        new DiffPiece("1", ChangeType.Unchanged, 1),
+                        new DiffPiece("2", ChangeType.Unchanged, 2),
+                        new DiffPiece("3", ChangeType.Unchanged, 3),
+                        new DiffPiece("4", ChangeType.Unchanged, 4),
+                        new DiffPiece("5", ChangeType.Unchanged, 5),
+                    });
+            }
+
+            [Fact]
+            public void Will_ignore_whitespace_by_default_2()
+            {
+                string textOld = "1\n2\n3\n4\n5";
+                string textNew = "1\n 2\n3 \n 4 \n5";
+                var builder = new SideBySideDiffBuilder(new Differ());
+                var model = builder.BuildDiffModel(textOld, textNew);
+                Assert.Equal(
+                    model.OldText.Lines,
+                    new DiffPiece[]
+                    {
+                        new DiffPiece("1", ChangeType.Unchanged, 1),
+                        new DiffPiece("2", ChangeType.Unchanged, 2),
+                        new DiffPiece("3", ChangeType.Unchanged, 3),
+                        new DiffPiece("4", ChangeType.Unchanged, 4),
+                        new DiffPiece("5", ChangeType.Unchanged, 5),
+                    });
+                Assert.Equal(
+                    model.NewText.Lines,
+                    new DiffPiece[]
+                    {
+                        new DiffPiece("1", ChangeType.Unchanged, 1),
+                        new DiffPiece(" 2", ChangeType.Unchanged, 2),
+                        new DiffPiece("3 ", ChangeType.Unchanged, 3),
+                        new DiffPiece(" 4 ", ChangeType.Unchanged, 4),
+                        new DiffPiece("5", ChangeType.Unchanged, 5),
+                    });
+            }
+
+            [Fact]
+            public void Will_ignore_whitespace_by_default_3()
+            {
+                string textOld = "1\n 2\n3 \n 4 \n5";
+                string textNew = "1\n2\n3\n4\n5";
+                var builder = new SideBySideDiffBuilder(new Differ());
+                var model = builder.BuildDiffModel(textOld, textNew, ignoreWhitespace: true);
+                Assert.Equal(
+                    model.OldText.Lines,
+                    new DiffPiece[]
+                    {
+                        new DiffPiece("1", ChangeType.Unchanged, 1),
+                        new DiffPiece(" 2", ChangeType.Unchanged, 2),
+                        new DiffPiece("3 ", ChangeType.Unchanged, 3),
+                        new DiffPiece(" 4 ", ChangeType.Unchanged, 4),
+                        new DiffPiece("5", ChangeType.Unchanged, 5),
+                    });
+                Assert.Equal(
+                    model.NewText.Lines,
+                    new DiffPiece[]
+                    {
+                        new DiffPiece("1", ChangeType.Unchanged, 1),
+                        new DiffPiece("2", ChangeType.Unchanged, 2),
+                        new DiffPiece("3", ChangeType.Unchanged, 3),
+                        new DiffPiece("4", ChangeType.Unchanged, 4),
+                        new DiffPiece("5", ChangeType.Unchanged, 5),
+                    });
+            }
+
+            [Fact]
+            public void Can_compare_whitespace()
+            {
+                string textOld = "1\n 2\n3 \n 4 \n5";
+                string textNew = "1\n2\n3\n4\n5";
+                var builder = new SideBySideDiffBuilder(new Differ());
+                var model = builder.BuildDiffModel(textOld, textNew, ignoreWhitespace: false);
+                Assert.Equal(
+                    model.OldText.Lines,
+                    new DiffPiece[]
+                    {
+                        new DiffPiece("1", ChangeType.Unchanged, 1),
+                        new DiffPiece(" 2", ChangeType.Modified, 2)
+                        {
+                            SubPieces =
+                            {
+                                new DiffPiece(" ", ChangeType.Deleted, 1),
+                                new DiffPiece("2", ChangeType.Unchanged, 2),
+                            },
+                        },
+                        new DiffPiece("3 ", ChangeType.Modified, 3)
+                        {
+                            SubPieces =
+                            {
+                                new DiffPiece("3", ChangeType.Unchanged, 1),
+                                new DiffPiece(" ", ChangeType.Deleted, 2),
+                            },
+                        },
+                        new DiffPiece(" 4 ", ChangeType.Modified, 4)
+                        {
+                            SubPieces =
+                            {
+                                new DiffPiece(" ", ChangeType.Deleted, 1),
+                                new DiffPiece("4", ChangeType.Unchanged, 2),
+                                new DiffPiece(" ", ChangeType.Deleted, 3),
+                            },
+                        },
+                        new DiffPiece("5", ChangeType.Unchanged, 5),
+                    });
+                Assert.Equal(
+                    model.NewText.Lines,
+                    new DiffPiece[]
+                    {
+                        new DiffPiece("1", ChangeType.Unchanged, 1),
+                        new DiffPiece("2", ChangeType.Modified, 2)
+                        {
+                            SubPieces =
+                            {
+                                new DiffPiece(null, ChangeType.Imaginary),
+                                new DiffPiece("2", ChangeType.Unchanged, 1),
+                            },
+                        },
+                        new DiffPiece("3", ChangeType.Modified, 3)
+                        {
+                            SubPieces =
+                            {
+                                new DiffPiece("3", ChangeType.Unchanged, 1),
+                                new DiffPiece(null, ChangeType.Imaginary),
+                            },
+                        },
+                        new DiffPiece("4", ChangeType.Modified, 4)
+                        {
+                            SubPieces =
+                            {
+                                new DiffPiece(null, ChangeType.Imaginary),
+                                new DiffPiece("4", ChangeType.Unchanged, 1),
+                                new DiffPiece(null, ChangeType.Imaginary),
+                            },
+                        },
+                        new DiffPiece("5", ChangeType.Unchanged, 5),
+                    });
             }
         }
     }

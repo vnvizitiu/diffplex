@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using DiffPlex.Chunkers;
 using DiffPlex.DiffBuilder.Model;
 using DiffPlex.Model;
 
@@ -9,19 +10,70 @@ namespace DiffPlex.DiffBuilder
     {
         private readonly IDiffer differ;
 
-        public InlineDiffBuilder(IDiffer differ)
+        /// <summary>
+        /// Gets the default singleton instance of the inline diff builder.
+        /// </summary>
+        public static InlineDiffBuilder Instance { get; } = new InlineDiffBuilder();
+
+        public InlineDiffBuilder(IDiffer differ = null)
         {
-            this.differ = differ ?? throw new ArgumentNullException(nameof(differ));
+            this.differ = differ ?? Differ.Instance;
         }
 
         public DiffPaneModel BuildDiffModel(string oldText, string newText)
+            => BuildDiffModel(oldText, newText, ignoreWhitespace: true);
+
+        public DiffPaneModel BuildDiffModel(string oldText, string newText, bool ignoreWhitespace)
+        {
+            var chunker = new LineChunker();
+            return BuildDiffModel(oldText, newText, ignoreWhitespace, false, chunker);
+        }
+
+        public DiffPaneModel BuildDiffModel(string oldText, string newText, bool ignoreWhitespace, bool ignoreCase, IChunker chunker)
         {
             if (oldText == null) throw new ArgumentNullException(nameof(oldText));
             if (newText == null) throw new ArgumentNullException(nameof(newText));
 
             var model = new DiffPaneModel();
-            var diffResult = differ.CreateLineDiffs(oldText, newText, ignoreWhitespace: true);
+            var diffResult = differ.CreateDiffs(oldText, newText, ignoreWhitespace, ignoreCase: ignoreCase, chunker);
             BuildDiffPieces(diffResult, model.Lines);
+            
+            return model;
+        }
+
+        /// <summary>
+        /// Gets the inline textual diffs.
+        /// </summary>
+        /// <param name="oldText">The old text to diff.</param>
+        /// <param name="newText">The new text.</param>
+        /// <param name="ignoreWhiteSpace"><see langword="true"/> if ignore the white space; otherwise, <see langword="false"/>.</param>
+        /// <param name="ignoreCase"><see langword="true"/> if case-insensitive; otherwise, <see langword="false"/>.</param>
+        /// <param name="chunker">The chunker.</param>
+        /// <returns>The diffs result.</returns>
+        public static DiffPaneModel Diff(string oldText, string newText, bool ignoreWhiteSpace = true, bool ignoreCase = false, IChunker chunker = null)
+        {
+            return Diff(Differ.Instance, oldText, newText, ignoreWhiteSpace, ignoreCase, chunker);
+        }
+
+        /// <summary>
+        /// Gets the inline textual diffs.
+        /// </summary>
+        /// <param name="differ">The differ instance.</param>
+        /// <param name="oldText">The old text to diff.</param>
+        /// <param name="newText">The new text.</param>
+        /// <param name="ignoreWhiteSpace"><see langword="true"/> if ignore the white space; otherwise, <see langword="false"/>.</param>
+        /// <param name="ignoreCase"><see langword="true"/> if case-insensitive; otherwise, <see langword="false"/>.</param>
+        /// <param name="chunker">The chunker.</param>
+        /// <returns>The diffs result.</returns>
+        public static DiffPaneModel Diff(IDiffer differ, string oldText, string newText, bool ignoreWhiteSpace = true, bool ignoreCase = false, IChunker chunker = null)
+        {
+            if (oldText == null) throw new ArgumentNullException(nameof(oldText));
+            if (newText == null) throw new ArgumentNullException(nameof(newText));
+
+            var model = new DiffPaneModel();
+            var diffResult = (differ ?? Differ.Instance).CreateDiffs(oldText, newText, ignoreWhiteSpace, ignoreCase, chunker ?? LineChunker.Instance);
+            BuildDiffPieces(diffResult, model.Lines);
+            
             return model;
         }
 
@@ -60,7 +112,7 @@ namespace DiffPlex.DiffBuilder
                 }
             }
 
-            for (; bPos < diffResult.PiecesNew.Length; bPos++)
+            for (; bPos < diffResult.PiecesNew.Count; bPos++)
                 pieces.Add(new DiffPiece(diffResult.PiecesNew[bPos], ChangeType.Unchanged, bPos + 1));
         }
     }

@@ -1,89 +1,71 @@
 ﻿using System;
 using System.Collections.Generic;
+using DiffPlex.Chunkers;
 using DiffPlex.Model;
 
 namespace DiffPlex
 {
     public class Differ : IDiffer
     {
-        private static readonly string[] emptyStringArray = new string[0];
+        /// <summary>
+        /// Gets the default singleton instance of differ instance.
+        /// </summary>
+        public static Differ Instance { get; } = new Differ();
 
         public DiffResult CreateLineDiffs(string oldText, string newText, bool ignoreWhitespace)
         {
-            return CreateLineDiffs(oldText, newText, ignoreWhitespace, false);
+            return CreateDiffs(oldText, newText, ignoreWhitespace, false, new LineChunker());
         }
 
         public DiffResult CreateLineDiffs(string oldText, string newText, bool ignoreWhitespace, bool ignoreCase)
         {
-            if (oldText == null) throw new ArgumentNullException(nameof(oldText));
-            if (newText == null) throw new ArgumentNullException(nameof(newText));
-
-
-            return CreateCustomDiffs(oldText, newText, ignoreWhitespace, ignoreCase, str => str.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None));
+            return CreateDiffs(oldText, newText, ignoreWhitespace, ignoreCase, new LineChunker());
         }
 
         public DiffResult CreateCharacterDiffs(string oldText, string newText, bool ignoreWhitespace)
         {
-            return CreateCharacterDiffs(oldText, newText, ignoreWhitespace, false);
+            return CreateDiffs(oldText, newText, ignoreWhitespace, false, new CharacterChunker());
         }
 
         public DiffResult CreateCharacterDiffs(string oldText, string newText, bool ignoreWhitespace, bool ignoreCase)
         {
-            if (oldText == null) throw new ArgumentNullException(nameof(oldText));
-            if (newText == null) throw new ArgumentNullException(nameof(newText));
-
-
-            return CreateCustomDiffs(
-                oldText,
-                newText,
-                ignoreWhitespace,
-                ignoreCase,
-                str =>
-                    {
-                        var s = new string[str.Length];
-                        for (int i = 0; i < str.Length; i++) s[i] = str[i].ToString();
-                        return s;
-                    });
+            return CreateDiffs(oldText, newText, ignoreWhitespace, ignoreCase, new CharacterChunker());
         }
 
         public DiffResult CreateWordDiffs(string oldText, string newText, bool ignoreWhitespace, char[] separators)
         {
-            return CreateWordDiffs(oldText, newText, ignoreWhitespace, false, separators);
+            return CreateDiffs(oldText, newText, ignoreWhitespace, false, new DelimiterChunker(separators));
         }
 
         public DiffResult CreateWordDiffs(string oldText, string newText, bool ignoreWhitespace, bool ignoreCase, char[] separators)
         {
-            if (oldText == null) throw new ArgumentNullException(nameof(oldText));
-            if (newText == null) throw new ArgumentNullException(nameof(newText));
-
-
-            return CreateCustomDiffs(
-                oldText,
-                newText,
-                ignoreWhitespace,
-                ignoreCase,
-                str => SmartSplit(str, separators));
+            return CreateDiffs(oldText, newText, ignoreWhitespace, ignoreCase, new DelimiterChunker(separators));
         }
 
         public DiffResult CreateCustomDiffs(string oldText, string newText, bool ignoreWhiteSpace, Func<string, string[]> chunker)
         {
-            return CreateCustomDiffs(oldText, newText, ignoreWhiteSpace, false, chunker);
+            return CreateDiffs(oldText, newText, ignoreWhiteSpace, false, new CustomFunctionChunker(chunker));
         }
 
         public DiffResult CreateCustomDiffs(string oldText, string newText, bool ignoreWhiteSpace, bool ignoreCase, Func<string, string[]> chunker)
+        {
+            return CreateDiffs(oldText, newText, ignoreWhiteSpace, ignoreCase, new CustomFunctionChunker(chunker));
+        }
+
+        public DiffResult CreateDiffs(string oldText, string newText, bool ignoreWhiteSpace, bool ignoreCase, IChunker chunker)
         {
             if (oldText == null) throw new ArgumentNullException(nameof(oldText));
             if (newText == null) throw new ArgumentNullException(nameof(newText));
             if (chunker == null) throw new ArgumentNullException(nameof(chunker));
 
-            var pieceHash = new Dictionary<string, int>();
+            var pieceHash = new Dictionary<string, int>(ignoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
             var lineDiffs = new List<DiffBlock>();
 
             var modOld = new ModificationData(oldText);
             var modNew = new ModificationData(newText);
 
-            BuildPieceHashes(pieceHash, modOld, ignoreWhiteSpace, ignoreCase, chunker);
-            BuildPieceHashes(pieceHash, modNew, ignoreWhiteSpace, ignoreCase, chunker);
+            BuildPieceHashes(pieceHash, modOld, ignoreWhiteSpace, chunker);
+            BuildPieceHashes(pieceHash, modNew, ignoreWhiteSpace, chunker);
 
             BuildModificationData(modOld, modNew);
 
@@ -118,27 +100,6 @@ namespace DiffPlex
             } while (posA < piecesALength && posB < piecesBLength);
 
             return new DiffResult(modOld.Pieces, modNew.Pieces, lineDiffs);
-        }
-
-        private static string[] SmartSplit(string str, char[] delims)
-        {
-            var list = new List<string>();
-            int begin = 0;
-            for (int i = 0; i < str.Length; i++)
-            {
-                if (Array.IndexOf(delims, str[i]) != -1)
-                {
-                    list.Add(str.Substring(begin, (i - begin)));
-                    list.Add(str.Substring(i, 1));
-                    begin = i + 1;
-                }
-                else if (i >= str.Length - 1)
-                {
-                    list.Add(str.Substring(begin, (i + 1 - begin)));
-                }
-            }
-
-            return list.ToArray();
         }
 
         /// <summary>
@@ -362,25 +323,29 @@ namespace DiffPlex
             }
         }
 
-        private static void BuildPieceHashes(IDictionary<string, int> pieceHash, ModificationData data, bool ignoreWhitespace, bool ignoreCase, Func<string, string[]> chunker)
+        private static void BuildPieceHashes(IDictionary<string, int> pieceHash, ModificationData data, bool ignoreWhitespace, IChunker chunker)
         {
-            var pieces = string.IsNullOrEmpty(data.RawData)
-                ? emptyStringArray
-                : chunker(data.RawData);
+            if (string.IsNullOrEmpty(data.RawData))
+            {
+                data.Pieces = [];
+                data.HashedPieces = [];
+                data.Modifications = [];
+                return;
+            }
 
+            var pieces = chunker.Chunk(data.RawData);
             data.Pieces = pieces;
-            data.HashedPieces = new int[pieces.Length];
-            data.Modifications = new bool[pieces.Length];
+            data.HashedPieces = new int[pieces.Count];
+            data.Modifications = new bool[pieces.Count];
 
-            for (int i = 0; i < pieces.Length; i++)
+            for (int i = 0; i < pieces.Count; i++)
             {
                 string piece = pieces[i];
                 if (ignoreWhitespace) piece = piece.Trim();
-                if (ignoreCase) piece = piece.ToUpperInvariant();
 
-                if (pieceHash.ContainsKey(piece))
+                if (pieceHash.TryGetValue(piece, out var value))
                 {
-                    data.HashedPieces[i] = pieceHash[piece];
+                    data.HashedPieces[i] = value;
                 }
                 else
                 {
@@ -388,6 +353,7 @@ namespace DiffPlex
                     pieceHash[piece] = pieceHash.Count;
                 }
             }
+
         }
     }
 }
